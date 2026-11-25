@@ -130,6 +130,7 @@ body.admin .ctrl{display:flex}
 .gear{position:fixed;bottom:12px;left:12px;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:rgba(0,0,0,.25);cursor:pointer;display:grid;place-items:center;opacity:.35;transition:opacity .2s}
 .gear:hover{opacity:1}
 .gear svg{width:22px;height:22px}
+.gear.fs{left:64px}
 
 /* نوافذ */
 .ov{position:fixed;inset:0;background:rgba(15,15,13,.78);backdrop-filter:blur(6px);display:grid;place-items:center;z-index:50;padding:16px}
@@ -221,6 +222,7 @@ body.admin .ctrl{display:flex}
     <button class="btn danger" id="bWipe">مسح كل الفرق</button>
     <button class="btn ghost" id="bLock">قفل الإدارة</button>
   </div>
+  <button class="gear fs" id="fsBtn" aria-label="ملء الشاشة" title="ملء الشاشة (F)"><svg viewBox="0 0 24 24" fill="none" stroke="#faf9f0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path id="fsIco" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
   <button class="gear" id="gear" aria-label="الإدارة"><svg viewBox="0 0 24 24" fill="none" stroke="#faf9f0" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
 </main>
 
@@ -438,6 +440,19 @@ $("#gear").onclick = async () => {
   if (String(v) === String(CFG.adminPin)) { setAdmin(true); toast("تم فتح أزرار الإدارة"); } else toast("الرمز غير صحيح");
 };
 $("#bLock").onclick = () => setAdmin(false);
+
+/* ملء الشاشة */
+const fsEl = () => document.fullscreenElement || document.webkitFullscreenElement;
+async function toggleFS() {
+  try {
+    if (fsEl()) await (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    else { const r = document.documentElement; await (r.requestFullscreen || r.webkitRequestFullscreen).call(r); }
+  } catch { toast("المتصفح ما سمح بملء الشاشة — جرّب زر F11"); }
+}
+const fsIcon = () => $("#fsIco").setAttribute("d", fsEl() ? "M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" : "M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5");
+$("#fsBtn").onclick = toggleFS;
+document.addEventListener("fullscreenchange", fsIcon); document.addEventListener("webkitfullscreenchange", fsIcon);
+addEventListener("keydown", e => { if ((e.key === "f" || e.key === "F" || e.key === "ب") && isScreen() && !e.target.closest("input") && !document.querySelector(".ov")) toggleFS(); });
 
 /* مؤثر القرعة */
 let lastDraw = null;
