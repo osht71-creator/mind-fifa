@@ -1,0 +1,18 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // الفرق المسجّلة: الكل يقرأ ويسجّل، والحذف من شاشة العرض
+    match /fifa_teams/{id} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['team','p1','p2','ts'])
+        && request.resource.data.team is string && request.resource.data.team.size() > 0 && request.resource.data.team.size() <= 40
+        && request.resource.data.p1 is string && request.resource.data.p1.size() <= 40
+        && request.resource.data.p2 is string && request.resource.data.p2.size() <= 40;
+      allow delete: if true;
+    }
+    // حالة البطولة (القرعة والنتائج)
+    match /fifa_state/{id} {
+      allow read, write: if true;
+    }
+  }
+}

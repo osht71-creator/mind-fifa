@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#22221f">
+<title>بطولة فيفا | مايند</title>
+<script>
+/* ===================== الإعدادات — عدّلها هنا فقط ===================== */
+window.FIFA_CONFIG = {
+  // الصق إعدادات مشروع Firebase هنا (Project settings → Your apps → Web app)
+  // إذا تركتها فاضية تشتغل الصفحة بوضع التجربة على نفس الجهاز فقط
+  firebase: { apiKey: "", authDomain: "", projectId: "", storageBucket: "", messagingSenderId: "", appId: "" },
+  adminPin: "2026"   // رمز فتح أزرار الإدارة في شاشة العرض — غيّره
+};
+/* ====================================================================== */
+</script>
+<style>
+/*
+VOICE: ليلة بطولة ألعاب في المدرسة — حماس، أسماء كبيرة تُقرأ من آخر القاعة
+IDEA: لوحة بطولة على شاشة ملعب: بطاقات فرق ثم شجرة إقصائية
+PICTURE: شبكة الفرق الحيّة ثم الشجرة نفسها؛ الفائز يضيء بالأصفر
+COLOUR and TYPE: فحمي مايند أرضية، زيتي للحقول، أصفر فاتح للفائز والتأكيد — Baloo Bhaijaan 2
+LAYOUT: شعار أعلى المنتصف، عنوان، ثم المحتوى بملء الشاشة 16:9؛ صفحة التسجيل عمود واحد للجوال
+*/
+@font-face{font-family:"Baloo Bhaijaan 2";src:url(fonts/BalooBhaijaan2-VariableFont_wght.ttf) format("truetype");font-weight:400 800;font-display:swap}
+:root{--ch:#22221f;--ch2:#2c2c28;--ch3:#393934;--ol:#585d2c;--ol2:#767b3c;--ye:#f2e488;--ye2:#fff7c4;--wh:#faf9f0;--mu:#b4b39f;--line:rgba(242,228,136,.16)}
+*{box-sizing:border-box;margin:0;min-width:0}
+html,body{min-height:100%}
+body{font-family:"Baloo Bhaijaan 2",system-ui,sans-serif;background:var(--ch);color:var(--wh);line-height:1.4;overflow-x:clip;
+  background-image:radial-gradient(ellipse 70% 50% at 50% -10%,rgba(118,123,60,.55),transparent 70%),repeating-linear-gradient(135deg,transparent 0 46px,rgba(255,255,255,.018) 46px 92px)}
+button,input{font:inherit;color:inherit}
+.hidden{display:none!important}
+.logo{display:flex;justify-content:center;align-items:center}
+.logo img{height:100%;width:auto;display:block}
+.wm{direction:ltr;font-weight:800;letter-spacing:.02em;color:var(--ye);line-height:1}
+.wm span{color:var(--wh)}
+
+/* ---------- صفحة التسجيل ---------- */
+#reg{max-width:480px;margin:0 auto;padding:28px 18px 48px;display:flex;flex-direction:column;align-items:center;gap:14px}
+#reg .logo{height:64px}#reg .wm{font-size:44px}
+#reg h1{font-size:46px;font-weight:800;line-height:1.05;color:var(--ye);text-align:center;margin-top:6px}
+#reg .sub{color:var(--mu);font-size:17px;text-align:center;margin-top:-6px}
+.card{width:100%;background:var(--ch2);border:1px solid var(--line);border-radius:22px;padding:22px 18px;box-shadow:0 18px 40px rgba(0,0,0,.35)}
+form.card{display:flex;flex-direction:column;gap:14px}
+label{display:flex;flex-direction:column;gap:6px;font-weight:600;font-size:16px}
+input{background:var(--ch);border:2px solid var(--ch3);border-radius:14px;padding:12px 14px;font-size:18px;min-height:52px;outline:none;transition:border-color .2s}
+input:focus{border-color:var(--ye)}
+.pair{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:end}
+.pair .x{font-weight:800;color:var(--ye);font-size:22px;padding-bottom:10px}
+.btn{min-height:54px;border:0;border-radius:16px;background:var(--ye);color:var(--ch);font-weight:800;font-size:20px;cursor:pointer;padding:10px 22px;transition:transform .12s,filter .2s}
+.btn:hover{filter:brightness(1.05)}.btn:active{transform:scale(.98)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--wh);border:2px solid var(--ch3)}
+.btn.olive{background:var(--ol);color:var(--wh)}
+.btn.danger{background:#7a2e22;color:#fff}
+:focus-visible{outline:3px solid var(--ye);outline-offset:2px}
+.err{color:#ffb3a3;font-size:15px;min-height:1px}
+.done{text-align:center;display:flex;flex-direction:column;gap:10px;align-items:center}
+.done .tick{width:64px;height:64px;border-radius:50%;background:var(--ye);display:grid;place-items:center}
+.done h2{font-size:30px;color:var(--ye);line-height:1.1}
+.done .names{color:var(--wh);font-size:18px}
+.note{font-size:14px;color:var(--mu);text-align:center}
+
+/* ---------- شاشة العرض ---------- */
+#scr{height:100vh;height:100dvh;display:flex;flex-direction:column;padding:1.6vh 2.4vw 1.8vh;gap:1.6vh}
+.tvhead{display:flex;flex-direction:column;align-items:center;gap:.4vh}
+.tvhead .logo{height:8.5vh}.tvhead .wm{font-size:7vh}
+.tvhead h1{font-size:clamp(34px,7vh,96px);font-weight:800;line-height:1;color:var(--ye)}
+.phase{display:inline-flex;align-items:center;gap:.6em;font-size:clamp(15px,2.3vh,30px);color:var(--wh);background:rgba(88,93,44,.55);border:1px solid var(--line);padding:.15em 1em;border-radius:99px}
+.dot{width:.6em;height:.6em;border-radius:50%;background:#8fd16a;box-shadow:0 0 0 0 rgba(143,209,106,.7);animation:pulse 1.6s infinite}
+.phase.off .dot{background:var(--ye);animation:none}
+@keyframes pulse{70%{box-shadow:0 0 0 .7em rgba(143,209,106,0)}100%{box-shadow:0 0 0 0 rgba(143,209,106,0)}}
+
+.openwrap{flex:1;display:grid;grid-template-columns:minmax(0,1fr) clamp(220px,22vw,380px);gap:2vw;min-height:0}
+.qrbox{background:var(--ol);border-radius:2.4vh;padding:2.4vh 1.6vw;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.4vh;text-align:center;box-shadow:0 2vh 5vh rgba(0,0,0,.35)}
+.qrbox b{font-size:clamp(18px,3.2vh,40px);line-height:1.1}
+#qr{background:var(--ye2);padding:1.4vh;border-radius:1.6vh;width:min(100%,30vh);aspect-ratio:1;display:grid;place-items:center}
+#qr img,#qr canvas{width:100%!important;height:auto!important;display:block}
+.url{font-size:clamp(12px,1.7vh,20px);color:var(--ye2);word-break:break-all;direction:ltr}
+.count{margin-top:.6vh;display:flex;align-items:baseline;gap:.4em;font-size:clamp(16px,2.6vh,32px)}
+.count strong{font-size:clamp(40px,9vh,120px);color:var(--ye);line-height:1;font-weight:800}
+
+.gridwrap{overflow:auto;min-height:0;scrollbar-width:thin}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(clamp(180px,15vw,300px),1fr));gap:1.4vh 1vw;align-content:start}
+.grid.many{grid-template-columns:repeat(auto-fill,minmax(clamp(150px,11.5vw,240px),1fr))}
+.team{position:relative;background:var(--ch2);border:1px solid var(--line);border-radius:1.8vh;padding:1.4vh 1vw 1.3vh;border-top:.6vh solid var(--ol2)}
+.team .tn{font-size:clamp(18px,3.1vh,40px);font-weight:800;color:var(--ye);line-height:1.1;overflow-wrap:anywhere}
+.team .pl{font-size:clamp(13px,2vh,26px);color:var(--wh);opacity:.9;margin-top:.4vh;line-height:1.25}
+.team .pl i{font-style:normal;color:var(--mu);padding:0 .3em}
+.grid.many .tn{font-size:clamp(16px,2.5vh,32px)}.grid.many .pl{font-size:clamp(12px,1.7vh,22px)}
+.team.new{animation:pop .7s cubic-bezier(.2,1.4,.4,1) both}
+.team.new::after{content:"";position:absolute;inset:-2px;border-radius:inherit;border:2px solid var(--ye);animation:glow 2.6s ease-out forwards;pointer-events:none}
+@keyframes pop{from{transform:scale(.6) translateY(20px);opacity:0}}
+@keyframes glow{from{opacity:1}to{opacity:0}}
+.del{position:absolute;top:.5vh;left:.5vw;width:34px;height:34px;border-radius:50%;border:0;background:rgba(0,0,0,.35);color:#fff;cursor:pointer;display:none;font-size:18px;line-height:1}
+body.admin .del{display:block}
+.empty{grid-column:1/-1;display:grid;place-items:center;text-align:center;color:var(--mu);font-size:clamp(18px,3vh,36px);padding:8vh 2vw;border:2px dashed var(--ch3);border-radius:2.4vh}
+
+/* الشجرة */
+.bracket{flex:1;display:flex;gap:1.2vw;min-height:0}
+.col{flex:1;display:flex;flex-direction:column;min-width:0}
+.col h3{text-align:center;font-size:clamp(14px,2.3vh,30px);font-weight:700;color:var(--mu);margin-bottom:1vh}
+.col.now h3{color:var(--ye)}
+.ms{flex:1;display:flex;flex-direction:column;justify-content:space-around;gap:.8vh;min-height:0}
+.m{background:var(--ch2);border:1px solid var(--line);border-radius:1.4vh;overflow:hidden;display:flex;flex-direction:column;animation:rev .5s calc(var(--d,0)*90ms) both}
+.col.now .m{border-color:rgba(242,228,136,.45);box-shadow:0 0 0 1px rgba(242,228,136,.12),0 1.2vh 3vh rgba(0,0,0,.3)}
+@keyframes rev{from{opacity:0;transform:translateY(12px) scale(.96)}}
+.tm{display:flex;align-items:center;gap:.6vw;text-align:start;background:transparent;border:0;padding:.4vh .9vw;min-height:4vh;cursor:default;width:100%;transition:background .25s,opacity .25s}
+.tm+.tm{border-top:1px solid var(--line)}
+.tm .t{flex:1;min-width:0}
+.tm b{display:block;font-size:clamp(13px,2.3vh,30px);font-weight:800;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tm small{display:block;line-height:1.3;font-size:clamp(11px,1.55vh,20px);color:var(--mu);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tm .ck{width:2.6vh;height:2.6vh;flex:none;opacity:0}
+.tm.win{background:var(--ye);color:var(--ch)}.tm.win small{color:var(--ol)}.tm.win .ck{opacity:1}
+.tm.lose{opacity:.32}.tm.lose b{text-decoration:line-through;text-decoration-thickness:.12em}
+.tm.tbd b{color:var(--ch3)}.tm.bye b{color:var(--mu);font-weight:500;font-size:clamp(11px,1.7vh,22px)}
+body.admin .col.now .tm.pick{cursor:pointer}
+body.admin .col.now .tm.pick:hover{background:rgba(242,228,136,.14)}
+body.admin .col.now .tm.win:hover{background:var(--ye2)}
+.bracket.dense small{display:none}
+.bracket.dense .tm{min-height:0;padding:.15vh .7vw}.bracket.dense .tm b{font-size:clamp(12px,1.9vh,26px)}.bracket.dense .tm.bye b{font-size:clamp(11px,1.5vh,20px)}
+body.drawn .tvhead .logo{height:5.5vh}body.drawn .tvhead .wm{font-size:4.6vh}body.drawn .tvhead h1{font-size:clamp(28px,5vh,70px)}
+.ms>.m{flex:none}
+
+/* الإدارة */
+.ctrl{display:none;justify-content:center;gap:.8vw;flex-wrap:wrap}
+body.admin .ctrl{display:flex}
+.ctrl .btn{min-height:46px;font-size:clamp(15px,2vh,22px);padding:6px 18px}
+.gear{position:fixed;bottom:12px;left:12px;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:rgba(0,0,0,.25);cursor:pointer;display:grid;place-items:center;opacity:.35;transition:opacity .2s}
+.gear:hover{opacity:1}
+.gear svg{width:22px;height:22px}
+
+/* نوافذ */
+.ov{position:fixed;inset:0;background:rgba(15,15,13,.78);backdrop-filter:blur(6px);display:grid;place-items:center;z-index:50;padding:16px}
+.dlg{background:var(--ch2);border:1px solid var(--line);border-radius:22px;padding:24px;width:min(440px,100%);display:flex;flex-direction:column;gap:14px;text-align:center}
+.dlg h2{font-size:26px;color:var(--ye);line-height:1.15}
+.dlg p{color:var(--wh);opacity:.9}
+.dlg .row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.dlg input{text-align:center;letter-spacing:.3em}
+
+#drawfx{position:fixed;inset:0;z-index:40;display:grid;place-items:center;background:radial-gradient(circle at 50% 50%,var(--ol),var(--ch) 70%)}
+#drawfx .lb{font-size:clamp(20px,4vh,48px);color:var(--mu);text-align:center}
+#drawfx .roll{font-size:clamp(48px,13vh,180px);font-weight:800;color:var(--ye);text-align:center;line-height:1.05;min-height:1.2em;padding:0 4vw}
+
+#champ{position:fixed;inset:0;z-index:45;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,var(--ol2),var(--ch) 72%);overflow:hidden}
+.cbox{text-align:center;display:flex;flex-direction:column;align-items:center;gap:1.4vh;position:relative;z-index:2;padding:0 4vw}
+.cbox svg{height:26vh;width:calc(26vh * 120 / 140);filter:drop-shadow(0 2vh 3vh rgba(0,0,0,.45));animation:pop .9s cubic-bezier(.2,1.4,.4,1) both}
+.cbox .k{font-size:clamp(20px,4vh,48px);color:var(--ye2)}
+.cbox .n{font-size:clamp(48px,13vh,170px);font-weight:800;color:var(--ye);line-height:1}
+.cbox .p{font-size:clamp(20px,4.4vh,56px);color:var(--wh)}
+.conf{position:absolute;top:-5vh;width:1.1vh;height:2.2vh;border-radius:2px;animation:fall linear infinite}
+@keyframes fall{to{transform:translateY(112vh) rotate(720deg)}}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--wh);color:var(--ch);padding:10px 18px;border-radius:14px;font-weight:600;z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.4);max-width:90vw;text-align:center}
+.demo{position:fixed;top:8px;left:8px;font-size:13px;background:#7a2e22;color:#fff;padding:3px 10px;border-radius:8px;z-index:30}
+@media (max-width:820px){
+  #scr{height:auto;min-height:100vh}
+  .openwrap{grid-template-columns:1fr}.qrbox{order:-1}
+  .bracket{overflow-x:auto}.col{min-width:200px}
+}
+@media (prefers-reduced-motion:reduce){*,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ================= التسجيل ================= -->
+<main id="reg" class="hidden">
+  <div class="logo"></div>
+  <h1>بطولة فيفا</h1>
+  <p class="sub">سجّل فريقك الثنائي وانتظر القرعة على الشاشة</p>
+
+  <form id="f" class="card" novalidate>
+    <label>اسم الفريق<input id="fTeam" maxlength="28" autocomplete="off" required></label>
+    <div class="pair">
+      <label>اسمك<input id="fP1" maxlength="26" autocomplete="name" required></label>
+      <span class="x">+</span>
+      <label>اسم زميلك<input id="fP2" maxlength="26" autocomplete="off" required></label>
+    </div>
+    <p id="fErr" class="err" role="alert"></p>
+    <button class="btn" id="fBtn" type="submit">سجّل الفريق</button>
+  </form>
+
+  <div id="done" class="card done hidden">
+    <div class="tick"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#22221f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></div>
+    <h2 id="dTeam"></h2>
+    <p class="names" id="dNames"></p>
+    <p class="note">تم التسجيل — اسم فريقكم ظهر الآن على الشاشة</p>
+    <button class="btn ghost" id="again" type="button">تسجيل فريق آخر</button>
+  </div>
+
+  <div id="closed" class="card done hidden">
+    <h2>التسجيل مغلق</h2>
+    <p class="names">أُجريت القرعة — تابع المباريات على الشاشة</p>
+  </div>
+</main>
+
+<!-- ================= شاشة العرض ================= -->
+<main id="scr" class="hidden">
+  <header class="tvhead">
+    <div class="logo"></div>
+    <h1>بطولة فيفا</h1>
+    <div class="phase" id="phase"><span class="dot"></span><span id="phaseTx">التسجيل مفتوح</span></div>
+  </header>
+
+  <section class="openwrap" id="openV">
+    <div class="gridwrap"><div class="grid" id="grid"></div></div>
+    <aside class="qrbox">
+      <b>امسح الكود وسجّل فريقك</b>
+      <div id="qr"></div>
+      <div class="url" id="url"></div>
+      <div class="count"><strong id="cnt">0</strong><span>فريق مسجّل</span></div>
+    </aside>
+  </section>
+
+  <section class="bracket hidden" id="br"></section>
+
+  <div class="ctrl" id="ctrl">
+    <button class="btn" id="bDraw">إجراء القرعة</button>
+    <button class="btn olive" id="bUndo">تراجع</button>
+    <button class="btn ghost" id="bReopen">إعادة فتح التسجيل</button>
+    <button class="btn danger" id="bWipe">مسح كل الفرق</button>
+    <button class="btn ghost" id="bLock">قفل الإدارة</button>
+  </div>
+  <button class="gear" id="gear" aria-label="الإدارة"><svg viewBox="0 0 24 24" fill="none" stroke="#faf9f0" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+</main>
+
+<div id="drawfx" class="hidden"><div><p class="lb">جاري إجراء القرعة…</p><p class="roll" id="roll"></p></div></div>
+<div id="champ" class="hidden"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script type="module">
+{
+const CFG = window.FIFA_CONFIG || {};
+const $ = s => document.querySelector(s);
+const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const norm = s => String(s || "").trim().replace(/\s+/g, " ").toLowerCase();
+const toast = (msg, ms = 3200) => { const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), ms); };
+
+/* ---------- الشعار: logo.png إن وُجد وإلا كلمة MIND ---------- */
+document.querySelectorAll(".logo").forEach(box => {
+  const img = new Image(); img.alt = "مايند"; img.src = "logo.png";
+  img.onload = () => box.replaceChildren(img);
+  img.onerror = () => { box.innerHTML = '<div class="wm">MIND<span>.</span></div>'; };
+});
+
+/* ---------- التخزين ---------- */
+function localStore() {
+  const K1 = "fifa_teams", K2 = "fifa_state", tL = [], sL = [];
+  const ch = "BroadcastChannel" in window ? new BroadcastChannel("fifa") : null;
+  const rd = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+  const fire = k => { if (k === K1) tL.forEach(f => f(rd(K1, []))); if (k === K2) sL.forEach(f => f(rd(K2, null))); };
+  const wr = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} ch && ch.postMessage(k); fire(k); };
+  if (ch) ch.onmessage = e => fire(e.data);
+  addEventListener("storage", e => fire(e.key));
+  return {
+    mode: "local",
+    onTeams(f) { tL.push(f); f(rd(K1, [])); },
+    onState(f) { sL.push(f); f(rd(K2, null)); },
+    async addTeam(t) { const a = rd(K1, []); a.push({ ...t, id: Math.random().toString(36).slice(2), ts: Date.now() }); wr(K1, a); },
+    async delTeam(id) { wr(K1, rd(K1, []).filter(x => x.id !== id)); },
+    async clearTeams() { wr(K1, []); },
+    async setState(s) { wr(K2, s); }
+  };
+}
+async function fbStore(cfg) {
+  const base = "https://www.gstatic.com/firebasejs/10.12.2/";
+  const { initializeApp } = await import(base + "firebase-app.js");
+  const F = await import(base + "firebase-firestore.js");
+  const db = F.getFirestore(initializeApp(cfg));
+  const col = F.collection(db, "fifa_teams"), sd = F.doc(db, "fifa_state", "main");
+  const bad = e => { console.error(e); toast("تعذّر الاتصال بقاعدة البيانات"); };
+  return {
+    mode: "firebase",
+    onTeams(f) { F.onSnapshot(F.query(col, F.orderBy("ts")), s => f(s.docs.map(d => ({ id: d.id, ...d.data() }))), bad); },
+    onState(f) { F.onSnapshot(sd, s => f(s.exists() ? s.data() : null), bad); },
+    addTeam(t) { return F.addDoc(col, { ...t, ts: Date.now() }); },
+    delTeam(id) { return F.deleteDoc(F.doc(db, "fifa_teams", id)); },
+    async clearTeams() { const s = await F.getDocs(col); await Promise.all(s.docs.map(d => F.deleteDoc(d.ref))); },
+    setState(s) { return F.setDoc(sd, s); }
+  };
+}
+
+let store;
+try { store = CFG.firebase && CFG.firebase.apiKey ? await fbStore(CFG.firebase) : localStore(); }
+catch (e) { console.error(e); toast("تعذّر تحميل Firebase — تعمل الصفحة بوضع التجربة"); store = localStore(); }
+if (store.mode === "local") { const d = document.createElement("div"); d.className = "demo"; d.textContent = "وضع التجربة — هذا الجهاز فقط"; document.body.appendChild(d); }
+
+let teams = [], state = null;
+const isScreen = () => location.hash === "#screen" || new URLSearchParams(location.search).has("screen");
+const drawn = () => state && state.status === "drawn";
+const rounds = () => { try { return JSON.parse(state.rounds || "[]"); } catch { return []; } };
+const hist = () => { try { return JSON.parse(state.hist || "[]"); } catch { return []; } };
+
+/* ---------- نافذة حوار ---------- */
+function dialog({ title, text = "", input = false, ok = "تأكيد", okCls = "", cancel = "إلغاء" }) {
+  return new Promise(res => {
+    const ov = document.createElement("div"); ov.className = "ov";
+    ov.innerHTML = `<div class="dlg" role="dialog" aria-modal="true"><h2>${esc(title)}</h2>${text ? `<p>${esc(text)}</p>` : ""}${input ? '<input type="password" inputmode="numeric" id="dIn" autocomplete="off">' : ""}<div class="row"><button class="btn ${okCls}" id="dOk">${esc(ok)}</button>${cancel ? `<button class="btn ghost" id="dNo">${esc(cancel)}</button>` : ""}</div></div>`;
+    document.body.appendChild(ov);
+    const inp = ov.querySelector("#dIn"); (inp || ov.querySelector("#dOk")).focus();
+    const close = v => { ov.remove(); res(v); };
+    ov.querySelector("#dOk").onclick = () => close(input ? inp.value : true);
+    const no = ov.querySelector("#dNo"); if (no) no.onclick = () => close(null);
+    ov.addEventListener("keydown", e => { if (e.key === "Escape") close(null); if (e.key === "Enter" && inp) close(inp.value); });
+    ov.addEventListener("click", e => { if (e.target === ov) close(null); });
+  });
+}
+
+/* ================= التسجيل ================= */
+function renderReg() {
+  const mine = (() => { try { return JSON.parse(localStorage.getItem("fifa_mine")); } catch { return null; } })();
+  const showDone = mine && teams.some(t => t.id === mine.id || norm(t.team) === norm(mine.team));
+  $("#closed").classList.toggle("hidden", !drawn() || showDone);
+  $("#f").classList.toggle("hidden", drawn() || !!showDone);
+  $("#done").classList.toggle("hidden", !showDone);
+  if (showDone) { $("#dTeam").textContent = mine.team; $("#dNames").textContent = mine.p1 + "  +  " + mine.p2; }
+}
+$("#f").addEventListener("submit", async e => {
+  e.preventDefault();
+  const team = $("#fTeam").value.trim().replace(/\s+/g, " "), p1 = $("#fP1").value.trim().replace(/\s+/g, " "), p2 = $("#fP2").value.trim().replace(/\s+/g, " ");
+  const err = $("#fErr"); err.textContent = "";
+  if (!team || !p1 || !p2) return err.textContent = "عبّ الخانات الثلاث كلها";
+  if (norm(p1) === norm(p2)) return err.textContent = "اسمك واسم زميلك متطابقين — اكتب اسم زميلك";
+  if (drawn()) return renderReg();
+  if (teams.some(t => norm(t.team) === norm(team))) return err.textContent = "اسم الفريق مستخدم — اختر اسمًا آخر";
+  const b = $("#fBtn"); b.disabled = true; b.textContent = "جاري التسجيل…";
+  try {
+    await store.addTeam({ team, p1, p2 });
+    try { localStorage.setItem("fifa_mine", JSON.stringify({ team, p1, p2 })); } catch {}
+    $("#f").reset(); renderReg();
+    if (store.mode === "local") renderReg();
+  } catch (x) { console.error(x); err.textContent = "ما تم التسجيل — تأكد من الإنترنت وحاول مرة ثانية"; }
+  b.disabled = false; b.textContent = "سجّل الفريق";
+});
+$("#again").onclick = () => { try { localStorage.removeItem("fifa_mine"); } catch {} renderReg(); $("#fTeam").focus(); };
+
+/* ================= شاشة العرض ================= */
+const seen = new Set(); let firstPaint = true;
+function renderGrid() {
+  $("#cnt").textContent = teams.length;
+  const g = $("#grid"); g.classList.toggle("many", teams.length > 20);
+  if (!teams.length) { g.innerHTML = '<div class="empty">بانتظار أول فريق…<br>امسح الكود وسجّل</div>'; return; }
+  g.innerHTML = teams.map(t => {
+    const isNew = !firstPaint && !seen.has(t.id);
+    return `<div class="team${isNew ? " new" : ""}"><button class="del" data-del="${esc(t.id)}" aria-label="حذف">×</button><div class="tn">${esc(t.team)}</div><div class="pl">${esc(t.p1)}<i>+</i>${esc(t.p2)}</div></div>`;
+  }).join("");
+  teams.forEach(t => seen.add(t.id)); firstPaint = false;
+  const last = g.querySelector(".team.new:last-of-type"); if (last) last.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+$("#grid").addEventListener("click", async e => {
+  const id = e.target.closest("[data-del]")?.dataset.del; if (!id || !document.body.classList.contains("admin")) return;
+  const t = teams.find(x => x.id === id);
+  if (await dialog({ title: "حذف فريق «" + (t ? t.team : "") + "»؟", ok: "حذف", okCls: "danger" })) store.delTeam(id);
+});
+
+const rName = n => n === 1 ? "النهائي" : n === 2 ? "نصف النهائي" : n === 4 ? "ربع النهائي" : "دور الـ" + n * 2;
+const winner = m => m.w === "a" ? m.a : m.w === "b" ? m.b : null;
+const ck = '<svg class="ck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg>';
+
+function slot(m, side, r, i, cur) {
+  const t = m[side];
+  if (side === "b" && t === null) return `<div class="tm bye"><span class="t"><b>تأهل مباشر</b></span></div>`;
+  if (!t) return `<div class="tm tbd"><span class="t"><b>—</b></span></div>`;
+  const cls = m.w === side ? "win" : m.w ? "lose" : "";
+  const pick = cur && m.b !== null ? " pick" : "";
+  return `<button class="tm ${cls}${pick}" data-r="${r}" data-i="${i}" data-s="${side}"><span class="t"><b>${esc(t.team)}</b><small>${esc(t.p1)} + ${esc(t.p2)}</small></span>${ck}</button>`;
+}
+function renderBracket() {
+  const R = rounds(); if (!R.length) return;
+  const total = Math.log2(R[0].length * 2);
+  const br = $("#br"); br.classList.toggle("dense", R[0].length > 4);
+  let html = "", d = 0;
+  for (let r = 0; r < total; r++) {
+    const n = R[0].length / 2 ** r, ms = R[r] || Array.from({ length: n }, () => ({ a: undefined, b: undefined, w: null }));
+    const cur = r === R.length - 1;
+    html += `<div class="col${cur ? " now" : ""}"><h3>${rName(n)}</h3><div class="ms">` +
+      ms.map((m, i) => `<div class="m" style="--d:${d++}">${slot(m, "a", r, i, cur)}${slot(m, "b", r, i, cur)}</div>`).join("") + "</div></div>";
+  }
+  br.innerHTML = html;
+}
+$("#br").addEventListener("click", e => {
+  const b = e.target.closest(".tm.pick"); if (!b || !document.body.classList.contains("admin")) return;
+  pick(+b.dataset.r, +b.dataset.i, b.dataset.s);
+});
+
+function advance(R) {
+  const last = R[R.length - 1];
+  if (last.some(m => !m.w) || last.length === 1) return R;
+  const nx = []; for (let i = 0; i < last.length; i += 2) nx.push({ a: winner(last[i]), b: winner(last[i + 1]), w: null });
+  return [...R, nx];
+}
+async function save(R, extra = {}) {
+  const H = hist(); H.push(state.rounds); while (H.length > 60) H.shift();
+  await store.setState({ ...state, rounds: JSON.stringify(R), hist: JSON.stringify(H), ...extra });
+}
+function pick(r, i, s) {
+  const R = rounds(); if (r !== R.length - 1) return;
+  const m = R[r][i]; m.w = m.w === s ? null : s;
+  save(advance(R));
+}
+
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = crypto.getRandomValues(new Uint32Array(1))[0] % (i + 1); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function makeRound1(list) {
+  const t = shuffle(list.map(({ id, team, p1, p2 }) => ({ id, team, p1, p2 })));
+  let size = 2; while (size < t.length) size *= 2;
+  const nm = size / 2, byes = size - t.length, by = new Set();
+  for (let i = 0; i < byes; i++) by.add(Math.floor(i * nm / byes));
+  const m = []; let k = 0;
+  for (let i = 0; i < nm; i++) m.push(by.has(i) ? { a: t[k++], b: null, w: "a" } : { a: t[k++], b: t[k++], w: null });
+  return shuffle(m);
+}
+
+/* القرعة */
+$("#bDraw").onclick = async () => {
+  if (teams.length < 2) return toast("يلزم فريقان على الأقل");
+  if (!await dialog({ title: "إجراء القرعة الآن؟", text: "بيُقفل التسجيل وتُوزّع " + teams.length + " فرق عشوائيًا." , ok: "إجراء القرعة" })) return;
+  await store.setState({ status: "drawn", rounds: JSON.stringify([makeRound1(teams)]), hist: "[]", drawnAt: Date.now() });
+};
+$("#bUndo").onclick = () => {
+  const H = hist(); if (!H.length) return toast("لا يوجد شيء للتراجع عنه");
+  const prev = H.pop(); store.setState({ ...state, rounds: prev, hist: JSON.stringify(H) });
+};
+$("#bReopen").onclick = async () => {
+  if (await dialog({ title: "إعادة فتح التسجيل؟", text: "تُلغى القرعة الحالية وتبقى الفرق المسجّلة.", ok: "إعادة الفتح" })) store.setState({ status: "open" });
+};
+$("#bWipe").onclick = async () => {
+  if (!await dialog({ title: "مسح كل الفرق؟", text: "يُحذف كل التسجيل والقرعة نهائيًا — لبطولة جديدة.", ok: "مسح الكل", okCls: "danger" })) return;
+  await store.setState({ status: "open" }); await store.clearTeams(); seen.clear();
+};
+
+/* الإدارة */
+const setAdmin = on => { document.body.classList.toggle("admin", on); try { on ? sessionStorage.setItem("fifa_admin", "1") : sessionStorage.removeItem("fifa_admin"); } catch {} };
+try { if (sessionStorage.getItem("fifa_admin")) setAdmin(true); } catch {}
+$("#gear").onclick = async () => {
+  if (document.body.classList.contains("admin")) return setAdmin(false);
+  const v = await dialog({ title: "رمز الإدارة", input: true, ok: "دخول" });
+  if (v === null) return;
+  if (String(v) === String(CFG.adminPin)) { setAdmin(true); toast("تم فتح أزرار الإدارة"); } else toast("الرمز غير صحيح");
+};
+$("#bLock").onclick = () => setAdmin(false);
+
+/* مؤثر القرعة */
+let lastDraw = null;
+function playDraw() {
+  const fx = $("#drawfx"), roll = $("#roll"), names = teams.length ? teams.map(t => t.team) : ["…"];
+  fx.classList.remove("hidden"); let n = 0;
+  const iv = setInterval(() => { roll.textContent = names[n++ % names.length]; }, 85);
+  setTimeout(() => { clearInterval(iv); fx.classList.add("hidden"); renderBracket(); }, 2600);
+}
+
+/* البطل */
+let champShown = null;
+function champion() {
+  const R = rounds(), last = R[R.length - 1];
+  return R.length && last.length === 1 && last[0].w ? winner(last[0]) : null;
+}
+function showChamp(c) {
+  const box = $("#champ"), cols = ["#f2e488", "#fff7c4", "#767b3c", "#faf9f0", "#585d2c"];
+  let conf = ""; for (let i = 0; i < 70; i++) conf += `<i class="conf" style="right:${Math.random() * 100}%;background:${cols[i % 5]};animation-duration:${3 + Math.random() * 4}s;animation-delay:${-Math.random() * 6}s"></i>`;
+  box.innerHTML = conf + `<div class="cbox"><svg viewBox="0 0 120 140"><path d="M30 14h60v26c0 22-13 38-30 38S30 62 30 40z" fill="#f2e488"/><path d="M30 22H14c0 18 8 28 20 30M90 22h16c0 18-8 28-20 30" fill="none" stroke="#f2e488" stroke-width="7"/><path d="M60 14h30v26c0 22-13 38-30 38z" fill="#d9c96a"/><rect x="52" y="76" width="16" height="22" fill="#d9c96a"/><rect x="36" y="98" width="48" height="12" rx="3" fill="#585d2c"/><rect x="28" y="110" width="64" height="18" rx="4" fill="#2c2c28" stroke="#f2e488" stroke-width="2"/></svg>
+  <div class="k">بطل بطولة فيفا</div><div class="n">${esc(c.team)}</div><div class="p">${esc(c.p1)} + ${esc(c.p2)}</div>
+  <button class="btn ghost" id="cClose" style="margin-top:2vh">إغلاق</button></div>`;
+  box.classList.remove("hidden");
+  $("#cClose").onclick = () => box.classList.add("hidden");
+}
+
+function renderScreen() {
+  const d = drawn();
+  document.body.classList.toggle("drawn", d);
+  $("#openV").classList.toggle("hidden", d);
+  $("#br").classList.toggle("hidden", !d);
+  $("#bDraw").classList.toggle("hidden", d);
+  $("#bUndo").classList.toggle("hidden", !d);
+  $("#bDraw").disabled = teams.length < 2;
+  const ph = $("#phase"); ph.classList.toggle("off", d);
+  const c = d ? champion() : null;
+  if (!d) $("#phaseTx").textContent = "التسجيل مفتوح";
+  else if (c) $("#phaseTx").textContent = "انتهت البطولة";
+  else { const R = rounds(); $("#phaseTx").textContent = rName(R[R.length - 1].length); }
+  if (!d) { renderGrid(); champShown = null; $("#champ").classList.add("hidden"); return; }
+  if (state.drawnAt !== lastDraw) {
+    const fresh = lastDraw !== null || Date.now() - state.drawnAt < 15000;
+    lastDraw = state.drawnAt;
+    if (fresh) { playDraw(); return; }
+  }
+  if ($("#drawfx").classList.contains("hidden")) renderBracket();
+  const key = c ? c.id + state.rounds.length : null;
+  if (c && champShown !== key) { champShown = key; setTimeout(() => showChamp(c), 700); }
+  if (!c) { champShown = null; $("#champ").classList.add("hidden"); }
+}
+
+/* QR */
+function setupQR() {
+  const link = location.origin + location.pathname;
+  $("#url").textContent = link.replace(/^https?:\/\//, "").replace(/\/index\.html$/, "/").replace(/\/$/, "");
+  if (window.QRCode && location.protocol.startsWith("http")) new QRCode($("#qr"), { text: link, width: 512, height: 512, colorDark: "#22221f", colorLight: "#fff7c4", correctLevel: QRCode.CorrectLevel.M });
+  else $("#qr").innerHTML = '<span style="color:#22221f;font-size:14px;padding:8px">يظهر الكود بعد رفع الصفحة على الإنترنت</span>';
+}
+
+/* ---------- تشغيل ---------- */
+function route() {
+  const s = isScreen();
+  $("#scr").classList.toggle("hidden", !s); $("#reg").classList.toggle("hidden", s);
+  document.title = s ? "شاشة بطولة فيفا | مايند" : "تسجيل بطولة فيفا | مايند";
+  render();
+}
+function render() { if (isScreen()) renderScreen(); else renderReg(); }
+let qrDone = false;
+addEventListener("hashchange", () => { route(); if (isScreen() && !qrDone) { setupQR(); qrDone = true; } });
+store.onTeams(a => { teams = a.slice().sort((x, y) => (x.ts || 0) - (y.ts || 0)); render(); });
+store.onState(s => { state = s; render(); });
+route();
+if (isScreen()) { setupQR(); qrDone = true; }
+}
+</script>
+</body>
+</html>
